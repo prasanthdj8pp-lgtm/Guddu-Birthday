@@ -648,6 +648,14 @@
   }
   .finale-title{ font-size:clamp(36px, 7vw, 60px); }
 
+  #revealPhotoBtn.wiggle{ animation:btnWiggle .4s ease; }
+  @keyframes btnWiggle{
+    0%,100%{ transform:translateX(0) rotate(0deg); }
+    25%{ transform:translateX(-4px) rotate(-2deg); }
+    50%{ transform:translateX(4px) rotate(2deg); }
+    75%{ transform:translateX(-3px) rotate(-1deg); }
+  }
+
   .final-photo-frame{
     max-width:260px;
     margin:18px auto 4px;
@@ -764,8 +772,8 @@
       <div class="cake-tier bottom"></div>
       <div class="cake-plate"></div>
     </div>
+    <div class="wish-text show" id="wishText">Make a wish, <span id="wishName"></span> 🤍</div>
     <button class="btn" id="blowBtn" style="margin-top:26px;">Blow out the candles 💨</button>
-    <div class="wish-text" id="wishText">Make a wish, <span id="wishName"></span> 🤍</div>
   </div>
   <button class="btn" id="toPhotos" style="margin-top:30px; display:none;">Continue →</button>
 </section>
@@ -861,6 +869,7 @@
       <div class="final-photo-inner" id="finalPhotoInner"></div>
       <div class="final-photo-caption" id="finalPhotoCaption"></div>
     </div>
+    <button class="btn-ghost" id="revealPhoto2Btn" style="display:none;">Don't be angry if you don't like this one... here's the actual cute pic 😅</button>
     <button class="btn-ghost" id="replayBtn">Play it again</button>
   </div>
 </section>
@@ -880,7 +889,7 @@ const CONFIG = {
   unlockAt: "2026-08-21T00:00:00",
 
   // Number of candles on the cake (visually capped at 10 for layout)
-  age: 25,
+  age: 31,
 
   // One little message per balloon — pops up when each one is tapped.
   // Add or remove entries to match however many balloons you want (see
@@ -1035,7 +1044,10 @@ You're not behind. You're not weak. You're human, and that's enough. ❤️`
   // One extra candid photo revealed on the finale page when the "click here"
   // button is tapped. Leave "image" blank for a placeholder, or set it to a
   // filename/URL just like the photos above.
-  finalePhoto: { image: "Images/final.jpg", emoji: "😄", caption: "This one made the cut." }
+  finalePhoto: { image: "Images/final.jpg", emoji: "😄", caption: "This one made the cut." },
+
+  // A follow-up photo revealed after the first one, via its own "click here" button.
+  finalePhoto2: { image: "Images/finalc.jpg", emoji: "😍", caption: "Ok, this is the real one." }
 };
 /* ================================================================
    End of CONFIG. Nothing below this line needs editing.
@@ -1250,6 +1262,7 @@ for(let i=0;i<CANDLE_COUNT;i++){
   candlesEl.appendChild(c);
 }
 attachTilt(document.getElementById("cakeEl"), 14);
+document.getElementById("wishName").textContent = CONFIG.nickName;
 
 document.getElementById("blowBtn").addEventListener("click", function(){
   playBlow();
@@ -1258,9 +1271,7 @@ document.getElementById("blowBtn").addEventListener("click", function(){
     setTimeout(()=> f.classList.add("out"), idx*90);
   });
   this.disabled = true;
-  document.getElementById("wishName").textContent = CONFIG.nickName;
   setTimeout(()=>{
-    document.getElementById("wishText").classList.add("show");
     document.getElementById("toPhotos").style.display = "inline-block";
     playChime();
   }, flames.length*90 + 400);
@@ -1580,16 +1591,77 @@ if(CONFIG.finalePhoto.image){
 finalPhotoCaption.textContent = CONFIG.finalePhoto.caption || "";
 
 let photoShown = false;
+let teaseClicks = 0;
+const teasePrompts = [
+  "Click here to see one fun candid cute pic of you 👀",
+  "Nope, click here instead 👉",
+  "Wait, THIS one 👆",
+  "Ok just one more, promise 🤞",
+  "Alright, for real this time 😅"
+];
+
 revealPhotoBtn.addEventListener("click", ()=>{
-  photoShown = !photoShown;
-  finalPhotoFrame.classList.toggle("show", photoShown);
   if(photoShown){
+    photoShown = false;
+    finalPhotoFrame.classList.remove("show");
+    revealPhotoBtn.textContent = teasePrompts[0];
+    teaseClicks = 0;
+    revealPhoto2Btn.style.display = "none";
+    photo2Shown = false;
+    return;
+  }
+
+  teaseClicks++;
+  playPop();
+  revealPhotoBtn.classList.remove("wiggle");
+  void revealPhotoBtn.offsetWidth;
+  revealPhotoBtn.classList.add("wiggle");
+
+  if(teaseClicks < teasePrompts.length){
+    revealPhotoBtn.textContent = teasePrompts[teaseClicks];
+    return;
+  }
+
+  photoShown = true;
+  finalPhotoFrame.classList.add("show");
+  playSparkle();
+  spawnHeartBurst(finalPhotoFrame);
+  revealPhotoBtn.textContent = "Hide it again 🙈";
+  revealPhoto2Btn.style.display = "inline-block";
+});
+
+const revealPhoto2Btn = document.getElementById("revealPhoto2Btn");
+let photo2Shown = false;
+revealPhoto2Btn.addEventListener("click", ()=>{
+  photo2Shown = !photo2Shown;
+  playPop();
+  revealPhoto2Btn.classList.remove("wiggle");
+  void revealPhoto2Btn.offsetWidth;
+  revealPhoto2Btn.classList.add("wiggle");
+
+  finalPhotoInner.innerHTML = "";
+  finalPhotoFrame.classList.remove("show");
+
+  const photo = photo2Shown ? CONFIG.finalePhoto2 : CONFIG.finalePhoto;
+  if(photo.image){
+    const img = document.createElement("img");
+    img.src = photo.image;
+    img.alt = photo.caption || "photo";
+    finalPhotoInner.appendChild(img);
+  } else {
+    finalPhotoInner.textContent = photo.emoji || "😄";
+  }
+  finalPhotoCaption.textContent = photo.caption || "";
+
+  setTimeout(()=>{
+    finalPhotoFrame.classList.add("show");
     playSparkle();
     spawnHeartBurst(finalPhotoFrame);
-    revealPhotoBtn.textContent = "Hide it again 🙈";
-  } else {
-    revealPhotoBtn.textContent = "Click here to see one fun candid cute pic of you 👀";
-  }
+  }, 260);
+
+  revealPhoto2Btn.textContent = photo2Shown
+    ? "Ok wait, go back to that one 😂"
+    : "Don't be angry if you don't like this one... here's the actual cute pic 😅";
 });
 
 const ELEPHANT_SVG = `
