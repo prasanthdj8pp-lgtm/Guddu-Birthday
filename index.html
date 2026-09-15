@@ -884,12 +884,14 @@ const CONFIG = {
   nickName: "Guddu",
   fromName: "Prasanth",
 
-  // When the surprise unlocks. Use local time, format: "YYYY-MM-DDTHH:MM:SS"
-  // Set this to a moment already in the past if you want it open immediately.
-  unlockAt: "2026-08-21T00:00:00",
+  // When the surprise unlocks. Includes an explicit +05:30 (IST) offset so
+  // it unlocks at exactly midnight IST no matter what timezone the viewer's
+  // device is set to. To change the date, edit the date/time before the
+  // "+05:30" and keep that offset if you still want IST.
+  unlockAt: "2026-09-15T00:00:00+05:30",
 
   // Number of candles on the cake (visually capped at 10 for layout)
-  age: 31,
+  age: 25,
 
   // One little message per balloon — pops up when each one is tapped.
   // Add or remove entries to match however many balloons you want (see
@@ -1037,8 +1039,8 @@ You're not behind. You're not weak. You're human, and that's enough. ❤️`
     { image: "Images/Image3.jpg", emoji: "😂", color1: "#FF6F91", color2: "#B784F0", caption: "Just you, being unapologetically you" },
     { image: "Images/image4.jpg", emoji: "🚗", color1: "#FF9A6C", color2: "#F4B942", caption: "Certified menace behind the wheel" },
     { image: "Images/image5.jpg", emoji: "✨", color1: "#B784F0", color2: "#57D9C9", caption: "You + fairy lights = pure magic" },
-    { image: "Images/image6.jpg", emoji: "🕰️", color1: "#2c1a4d", color2: "#F4B942", caption: "Then: where the story started" },
-    { image: "Images/image7.jpg", emoji: "🚀", color1: "#57D9C9", color2: "#FF6F91", caption: "Now: still iconic, just leveled up" }
+    { image: "Images/image6.jpg", emoji: "🕰️", color1: "#2c1a4d", color2: "#F4B942", caption: "Me n You in 2023" },
+    { image: "Images/image7.jpg", emoji: "🚀", color1: "#57D9C9", color2: "#FF6F91", caption: "Me n You in 2025" }
   ],
 
   // One extra candid photo revealed on the finale page when the "click here"
@@ -1125,6 +1127,22 @@ function playWhoosh(){
 function playBlow(){
   if(!soundEnabled) return; ensureAudio();
   noiseBurst(0.55, "lowpass", 500, 200, 0.18);
+}
+function playHappyBirthdayTune(){
+  if(!soundEnabled) return; ensureAudio();
+  const N = { C4:261.63, D4:293.66, E4:329.63, F4:349.23, G4:392.00, A4:440.00, B4:493.88,
+              C5:523.25, D5:587.33, E5:659.25, F5:698.46, G5:783.99 };
+  const notes = [
+    [N.G4,0.22],[N.G4,0.22],[N.A4,0.38],[N.G4,0.38],[N.C5,0.38],[N.B4,0.75],
+    [N.G4,0.22],[N.G4,0.22],[N.A4,0.38],[N.G4,0.38],[N.D5,0.38],[N.C5,0.75],
+    [N.G4,0.22],[N.G4,0.22],[N.G5,0.38],[N.E5,0.38],[N.C5,0.38],[N.B4,0.38],[N.A4,0.75],
+    [N.F5,0.22],[N.F5,0.22],[N.E5,0.38],[N.C5,0.38],[N.D5,0.38],[N.C5,0.9]
+  ];
+  let t = 0;
+  notes.forEach(([freq,dur])=>{
+    tone(freq, t, dur*0.92, "triangle", 0.13);
+    t += dur;
+  });
 }
 document.getElementById("soundToggle").addEventListener("click", function(){
   soundEnabled = !soundEnabled;
@@ -1218,7 +1236,10 @@ function renderCountdown(){
 renderCountdown();
 timer = setInterval(renderCountdown, 1000);
 
-openBtn.addEventListener("click", ()=> goToStage(1));
+openBtn.addEventListener("click", ()=>{
+  goToStage(1);
+  setTimeout(playHappyBirthdayTune, 550);
+});
 
 /* ---------- CAKE STAGE: balloons ---------- */
 const balloonColors = ["#FF6F91","#F4B942","#57D9C9","#B784F0","#FF9A6C"];
